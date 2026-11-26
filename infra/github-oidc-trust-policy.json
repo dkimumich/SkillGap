@@ -9,8 +9,10 @@
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:dkimumich/SkillGap:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+          "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:dkimumich@179554858/SkillGap@1472549108:ref:refs/heads/main"
         }
       }
     }
