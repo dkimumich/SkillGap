@@ -13,8 +13,6 @@ During my internship application season, keyword-matching tools often gave me in
 
 ## Architecture
 
-![Architecture](docs/architecture.png)
-
 - **Serving a request:** API Gateway (public URL, rate-limited) → AWS Lambda running a Docker image → Mangum → FastAPI → `match()`.
 - **Shipping code:** every push runs lint and tests in GitHub Actions. Pushes to `main` that pass are built, pushed to Amazon ECR and deployed to Lambda automatically. GitHub signs in to AWS with OIDC, so no AWS keys are stored in the repo or in CI.
 
