@@ -1,6 +1,6 @@
 import pytest
 
-from skillgap import extract_skills, match
+from skillgap import extract_skills, match, required_skills
 
 RESUME = """
 Data science intern. Trained and evaluated ML models in Python with PyTorch and
@@ -179,3 +179,66 @@ def test_score_is_deterministic():
 def test_score_always_in_range():
     for posting in (GOOD_POSTING, POOR_POSTING, "Python"):
         assert 0 <= match(RESUME, posting).score <= 100
+
+
+# ---- required vs. mentioned skills -----------------------------------------
+
+SECTIONED_POSTING = """
+About the team
+We build internal tools with Jira, Confluence and Datadog.
+
+Responsibilities
+- Automate workflows and maintain GitHub integrations
+
+Minimum Qualifications
+- Experience with Python
+- Knowledge of agile practices
+
+Preferred Qualifications
+- Docker experience
+"""
+
+
+def test_required_skills_come_from_qualification_sections():
+    assert required_skills(SECTIONED_POSTING) == {"python", "agile"}
+
+
+def test_preferred_section_is_not_required():
+    assert "docker" not in required_skills(SECTIONED_POSTING)
+
+
+def test_posting_without_headings_has_no_required_skills():
+    assert required_skills("We need Python, SQL, AWS and Docker experience.") == set()
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["• Strong communication skills", "- Required: Python", "Excellent communication skills."],
+)
+def test_bullets_and_sentences_are_not_headings(line):
+    posting = "Responsibilities\n" + line + " SQL\n"
+    assert required_skills(posting) == set()
+
+
+@pytest.mark.parametrize("heading", ["## Requirements", "**Requirements**", "Requirements:"])
+def test_markdown_and_colon_headings(heading):
+    assert required_skills(heading + "\nPython and SQL\n") == {"python", "sql"}
+
+
+def test_missing_required_lists_only_required_gaps():
+    result = match("Agile team member using Jira.", SECTIONED_POSTING)
+    assert result.missing_required == ["python"]
+    assert "datadog" in result.missing_skills
+
+
+def test_required_skills_outweigh_mentioned_tools():
+    has_required = match("Python developer on an agile team.", SECTIONED_POSTING)
+    has_tools_only = match("Used Jira, Confluence, Datadog, GitHub and Docker.", SECTIONED_POSTING)
+    assert has_required.score > has_tools_only.score
+
+
+def test_coverage_weighting():
+    # Required: python, agile (both matched). Mentioned: jira, confluence, datadog, github,
+    # docker (github matched = 1 of 5). Coverage = 0.75 * 1.0 + 0.25 * 0.2 = 0.8
+    result = match("Python, agile, GitHub.", SECTIONED_POSTING)
+    assert result.skill_coverage == pytest.approx(0.8)

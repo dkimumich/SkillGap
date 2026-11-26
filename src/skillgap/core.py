@@ -7,6 +7,11 @@ The score combines two signals:
 
 Coverage carries most of the weight because it is what recruiters and ATS
 filters look at; TF-IDF adds a smaller signal for overall wording overlap.
+
+Postings are split into sections by their headings. Skills under a
+"Qualifications" / "Requirements" heading are *required*; skills found only
+elsewhere (responsibilities, tools the team uses, "nice to have") are
+*mentioned*. Required skills carry most of the coverage weight.
 """
 
 from __future__ import annotations
@@ -21,6 +26,20 @@ from skillgap.skills import SKILLS
 
 COVERAGE_WEIGHT = 0.7
 TFIDF_WEIGHT = 0.3
+REQUIRED_WEIGHT = 0.75   # share of coverage that comes from required skills
+MENTIONED_WEIGHT = 0.25  # share from skills only mentioned elsewhere
+
+# Section headings, checked in this order ("Preferred qualifications" is preferred).
+_PREFERRED_HEADING = re.compile(
+    r"preferred|nice[\s-]to[\s-]have|bonus|desired|pluses", re.IGNORECASE)
+_REQUIRED_HEADING = re.compile(
+    r"qualifications|requirements|required|must[\s-]have|what you(?:'ll| will)? bring"
+    r"|who you are|what we(?:'re| are) looking for|you have|skills", re.IGNORECASE)
+_OTHER_HEADING = re.compile(
+    r"responsibilities|what you(?:'ll| will)? do|about|benefits|overview|duties"
+    r"|the role|the team|day[\s-]to[\s-]day|compensation|perks", re.IGNORECASE)
+_MAX_HEADING_WORDS = 8
+_BULLETS = ("•", "·", "-", "–", "* ", "o ")
 
 
 @dataclass(frozen=True)
@@ -30,6 +49,7 @@ class MatchResult:
     tfidf_similarity: float         # 0-1
     matched_skills: list[str]
     missing_skills: list[str]
+    missing_required: list[str]     # the subset of missing_skills the posting requires
 
 
 def _alias_pattern(alias: str) -> str:
@@ -89,6 +109,47 @@ def _tfidf_similarity(resume: str, posting: str) -> float:
     return float(cosine_similarity(matrix[0], matrix[1])[0, 0])
 
 
+def _heading_kind(line: str) -> str | None:
+    """Return "required", "preferred" or "other" if the line is a section heading."""
+    raw = line.strip()
+    if raw.startswith(_BULLETS):  # "• Strong communication skills" is content, not a heading
+        return None
+    text = raw.strip("#*:").strip()
+    if not text or len(text.split()) > _MAX_HEADING_WORDS or text.endswith("."):
+        return None
+    if _PREFERRED_HEADING.search(text):
+        return "preferred"
+    if _REQUIRED_HEADING.search(text):
+        return "required"
+    if _OTHER_HEADING.search(text):
+        return "other"
+    return None
+
+
+def required_skills(posting_text: str) -> set[str]:
+    """Skills named under required-type headings. Empty if the posting has no such heading."""
+    found: set[str] = set()
+    current: str | None = None
+    for line in posting_text.splitlines():
+        kind = _heading_kind(line)
+        if kind is not None:
+            current = kind
+            continue
+        if current == "required":
+            found |= extract_skills(line)
+    return found
+
+
+def _coverage(matched: set[str], posting: set[str], required: set[str]) -> float:
+    required = required & posting
+    mentioned = posting - required
+    if not required or not mentioned:  # no sections, or everything is required
+        return len(matched) / len(posting)
+    required_cov = len(matched & required) / len(required)
+    mentioned_cov = len(matched & mentioned) / len(mentioned)
+    return REQUIRED_WEIGHT * required_cov + MENTIONED_WEIGHT * mentioned_cov
+
+
 def match(resume_text: str, posting_text: str) -> MatchResult:
     """Score how well a resume matches a job posting.
 
@@ -101,13 +162,14 @@ def match(resume_text: str, posting_text: str) -> MatchResult:
 
     resume_skills = extract_skills(resume_text)
     posting_skills = extract_skills(posting_text)
-    matched = sorted(posting_skills & resume_skills)
-    missing = sorted(posting_skills - resume_skills)
+    required = required_skills(posting_text)
+    matched = posting_skills & resume_skills
+    missing = posting_skills - resume_skills
 
     similarity = _tfidf_similarity(resume_text, posting_text)
 
     if posting_skills:
-        coverage: float | None = len(matched) / len(posting_skills)
+        coverage: float | None = _coverage(matched, posting_skills, required)
         raw = COVERAGE_WEIGHT * coverage + TFIDF_WEIGHT * similarity
     else:
         coverage = None
@@ -117,6 +179,7 @@ def match(resume_text: str, posting_text: str) -> MatchResult:
         score=round(100 * min(max(raw, 0.0), 1.0)),
         skill_coverage=coverage,
         tfidf_similarity=similarity,
-        matched_skills=matched,
-        missing_skills=missing,
+        matched_skills=sorted(matched),
+        missing_skills=sorted(missing),
+        missing_required=sorted(missing & required),
     )

@@ -8,11 +8,13 @@
   :root {
     --bg: #f7f7f5; --card: #ffffff; --ink: #1f1f1d; --muted: #6b6a65; --line: #e3e2dc;
     --accent: #2f5bd3; --good-bg: #e7f4ea; --good: #1e6b35; --gap-bg: #fdecea; --gap: #a3271c;
+    --warn-bg: #fdf3e1; --warn: #8a5300;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #161615; --card: #1f1f1d; --ink: #ecebe6; --muted: #a3a29b; --line: #34332f;
       --accent: #7c9cf0; --good-bg: #173a22; --good: #a6e0b5; --gap-bg: #44201c; --gap: #f2b3ab;
+      --warn-bg: #3d2c10; --warn: #f3cf8d;
     }
   }
   * { box-sizing: border-box; }
@@ -46,6 +48,7 @@
   .chip { padding: 4px 10px; border-radius: 999px; font-size: 14px; }
   .chip.good { background: var(--good-bg); color: var(--good); }
   .chip.gap { background: var(--gap-bg); color: var(--gap); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
   .none { color: var(--muted); font-size: 14px; }
   .note { margin-top: 20px; font-size: 13px; color: var(--muted); }
   footer { margin-top: 32px; font-size: 14px; color: var(--muted); }
@@ -84,12 +87,15 @@
       <div class="score"><span id="score">0</span><small> / 100</small></div>
       <div class="meta" id="meta"></div>
     </div>
-    <h2>Missing skills</h2>
+    <h2>Missing required skills</h2>
     <div class="chips" id="missing"></div>
+    <h2>Missing skills the posting only mentions</h2>
+    <div class="chips" id="mentioned"></div>
     <h2>Matched skills</h2>
     <div class="chips" id="matched"></div>
     <p class="note">Score = 70% skill coverage (posting skills found in the resume, synonyms included)
-      + 30% overall wording similarity (TF-IDF). Only skills in SkillGap's vocabulary are detected.</p>
+      + 30% overall wording similarity (TF-IDF). Skills under a Qualifications or Requirements heading
+      count as required and carry 75% of the coverage. Only skills in SkillGap's vocabulary are detected.</p>
   </section>
 
   <footer>
@@ -152,7 +158,9 @@
         ? "No known skills in the posting"
         : Math.round(body.skill_coverage * 100) + "% of the posting's skills found";
       $("meta").textContent = coverage + " · wording similarity " + body.tfidf_similarity.toFixed(2);
-      chips($("missing"), body.missing_skills, "gap", "None detected");
+      const required = new Set(body.missing_required);
+      chips($("missing"), body.missing_required, "gap", "None detected");
+      chips($("mentioned"), body.missing_skills.filter((s) => !required.has(s)), "warn", "None detected");
       chips($("matched"), body.matched_skills, "good", "None detected");
       $("result").style.display = "block";
       $("status").textContent = "";

@@ -34,6 +34,7 @@ class MatchResponse(BaseModel):
     tfidf_similarity: float
     matched_skills: list[str]
     missing_skills: list[str]
+    missing_required: list[str]
 
 
 @app.get("/", include_in_schema=False)
