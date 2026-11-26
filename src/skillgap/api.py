@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from skillgap.core import match
+from fastapi.responses import RedirectResponse
 
 MAX_CHARS = 50_000  # generous for a resume or posting; blocks huge payloads
 
@@ -32,6 +33,10 @@ class MatchResponse(BaseModel):
     matched_skills: list[str]
     missing_skills: list[str]
 
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    return RedirectResponse(url="/docs")
 
 @app.get("/health")
 def health() -> dict[str, str]:
