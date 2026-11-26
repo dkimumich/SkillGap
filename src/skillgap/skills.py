@@ -1,0 +1,108 @@
+"""Canonical skills and the aliases that map to them.
+
+Each key is the canonical skill name reported to the user. Each value is the
+list of aliases (lowercase) that count as that skill, including the canonical
+name itself. Matching is case-insensitive and respects word boundaries, so
+"java" does not match inside "javascript".
+
+Deliberately left out: one-letter or common-English names that cause false
+positives ("go", "r", bare "c", "rest"). Add longer, unambiguous aliases
+instead ("golang", "c programming", "rest api").
+"""
+
+SKILLS: dict[str, list[str]] = {
+    # Languages
+    "python": ["python", "python3"],
+    "java": ["java"],
+    "javascript": ["javascript", "js", "ecmascript", "es6"],
+    "typescript": ["typescript", "ts"],
+    "c": ["c programming", "c/c++", "ansi c"],
+    "c++": ["c++", "cpp", "c/c++"],
+    "c#": ["c#", "csharp"],
+    "go": ["golang"],
+    "rust": ["rust"],
+    "kotlin": ["kotlin"],
+    "swift": ["swift", "swiftui"],
+    "ruby": ["ruby"],
+    "php": ["php"],
+    "scala": ["scala"],
+    "matlab": ["matlab"],
+    "bash": ["bash", "shell scripting"],
+    "sql": ["sql"],
+    "html": ["html", "html5"],
+    "css": ["css", "css3"],
+    # Web / backend
+    "react": ["react", "react.js", "reactjs"],
+    "angular": ["angular", "angularjs"],
+    "vue": ["vue", "vue.js", "vuejs"],
+    "node.js": ["node.js", "nodejs", "node"],
+    "express": ["express.js", "expressjs"],
+    "django": ["django"],
+    "flask": ["flask"],
+    "fastapi": ["fastapi"],
+    "spring": ["spring boot", "spring framework", "springboot"],
+    ".net": [".net", "dotnet", "asp.net"],
+    "rest api": ["rest api", "rest apis", "restful", "restful api", "restful apis"],
+    "graphql": ["graphql"],
+    "microservices": ["microservices", "microservice"],
+    # Data / ML
+    "machine learning": ["machine learning", "ml"],
+    "deep learning": ["deep learning", "dl"],
+    "nlp": ["nlp", "natural language processing"],
+    "computer vision": ["computer vision"],
+    "llms": ["llm", "llms", "large language models", "large language model"],
+    "pytorch": ["pytorch", "torch"],
+    "tensorflow": ["tensorflow", "tf"],
+    "scikit-learn": ["scikit-learn", "sklearn", "scikit learn"],
+    "pandas": ["pandas"],
+    "numpy": ["numpy"],
+    "spark": ["apache spark", "pyspark", "spark"],
+    "hadoop": ["hadoop"],
+    "airflow": ["airflow", "apache airflow"],
+    "statistics": ["statistics", "statistical analysis", "statistical modeling"],
+    "a/b testing": ["a/b testing", "ab testing", "a/b tests", "experimentation"],
+    "data visualization": ["data visualization", "data visualisation"],
+    "power bi": ["power bi", "powerbi"],
+    "tableau": ["tableau"],
+    "excel": ["excel", "microsoft excel"],
+    "etl": ["etl", "data pipelines", "data pipeline"],
+    # Databases
+    "postgresql": ["postgresql", "postgres"],
+    "mysql": ["mysql"],
+    "mongodb": ["mongodb", "mongo"],
+    "redis": ["redis"],
+    "nosql": ["nosql"],
+    "dynamodb": ["dynamodb"],
+    "snowflake": ["snowflake"],
+    # Cloud / DevOps
+    "aws": ["aws", "amazon web services"],
+    "gcp": ["gcp", "google cloud", "google cloud platform"],
+    "azure": ["azure", "microsoft azure"],
+    "lambda": ["aws lambda", "lambda functions"],
+    "s3": ["s3", "amazon s3"],
+    "ec2": ["ec2", "amazon ec2"],
+    "docker": ["docker", "containerization", "containers"],
+    "kubernetes": ["kubernetes", "k8s"],
+    "terraform": ["terraform"],
+    "ci/cd": ["ci/cd", "cicd", "continuous integration", "continuous deployment",
+              "continuous delivery"],
+    "github actions": ["github actions"],
+    "jenkins": ["jenkins"],
+    "git": ["git"],
+    "github": ["github"],
+    "linux": ["linux", "unix"],
+    # Testing
+    "unit testing": ["unit testing", "unit tests", "automated testing",
+                     "automated tests", "test automation"],
+    "pytest": ["pytest"],
+    "junit": ["junit"],
+    "gtest": ["gtest", "googletest", "google test"],
+    # Practices / mobile
+    "agile": ["agile", "scrum"],
+    "object-oriented programming": ["object-oriented programming",
+                                    "object oriented programming", "oop"],
+    "data structures": ["data structures"],
+    "algorithms": ["algorithms"],
+    "ios": ["ios development", "ios"],
+    "android": ["android"],
+}
