@@ -57,7 +57,7 @@ class MatchResult:
     matched_skills: list[str]
     missing_skills: list[str]
     missing_required: list[str]     # the subset of missing_skills the posting requires
-    confidence: str                 # "low" / "medium" / "high", from the posting's skill count
+    confidence: str                 # "low" / "medium" / "high": evidence behind the score
 
 
 def _alias_pattern(alias: str) -> str:
@@ -163,7 +163,14 @@ def _adjusted_coverage(coverage: float, skill_count: int) -> float:
     return (coverage * skill_count + PRIOR_COVERAGE * PRIOR_SKILLS) / (skill_count + PRIOR_SKILLS)
 
 
-def _confidence(skill_count: int) -> str:
+def _confidence(posting_skills: set[str], required: set[str]) -> str:
+    """How much evidence the score rests on.
+
+    Required skills carry 75% of the coverage, so when the posting has a
+    requirements section, count only the known skills in it.
+    """
+    required = required & posting_skills
+    skill_count = len(required) if required else len(posting_skills)
     if skill_count <= 2:
         return "low"
     if skill_count <= 5:
@@ -204,5 +211,5 @@ def match(resume_text: str, posting_text: str) -> MatchResult:
         matched_skills=sorted(matched),
         missing_skills=sorted(missing),
         missing_required=sorted(missing & required),
-        confidence=_confidence(len(posting_skills)),
+        confidence=_confidence(posting_skills, required),
     )

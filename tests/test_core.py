@@ -78,6 +78,9 @@ def test_skills_found_next_to_punctuation(text, skill):
         ("Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog", "artifactory"),
         ("Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog", "datadog"),
         ("process improvement, automation, and configuration as code", "infrastructure as code"),
+        ("AWS (Lambda, API Gateway, ECR)", "lambda"),
+        ("AWS services, such as DynamoDB, API Gateway, Lambda, or AppSync", "lambda"),
+        ("AWS services, such as DynamoDB, API Gateway, Lambda, or AppSync", "appsync"),
     ],
 )
 def test_skills_from_real_applications(text, skill):
@@ -281,3 +284,13 @@ def test_more_evidence_moves_coverage_further_from_neutral():
 )
 def test_confidence_levels(posting, level):
     assert match(FULL_RESUME, posting).confidence == level
+
+
+def test_confidence_counts_required_skills_when_present():
+    # 7 known skills overall, but only python and agile are required.
+    assert match("Python, agile", SECTIONED_POSTING).confidence == "low"
+
+
+def test_confidence_with_many_required_skills():
+    posting = "Requirements\nPython, SQL, AWS, Docker, React, Java\n\nAbout us\nWe use Jira."
+    assert match("Python", posting).confidence == "high"

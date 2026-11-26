@@ -165,7 +165,7 @@
       $("meta").textContent = coverage + " · wording similarity " + body.tfidf_similarity.toFixed(2)
         + " · confidence: " + body.confidence;
       $("caution").textContent = body.confidence === "low"
-        ? "Low confidence: the posting names very few skills SkillGap recognizes, so treat this score as a rough guide."
+        ? "Low confidence: the score rests on very few skills SkillGap recognizes in the posting (its requirements count most), so treat it as a rough guide."
         : "";
       const required = new Set(body.missing_required);
       chips($("missing"), body.missing_required, "gap", "None detected");

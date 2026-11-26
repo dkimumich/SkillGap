@@ -90,7 +90,10 @@ SKILLS: dict[str, list[str]] = {
     "aws": ["aws", "amazon web services"],
     "gcp": ["gcp", "google cloud", "google cloud platform"],
     "azure": ["azure", "microsoft azure"],
-    "lambda": ["aws lambda", "lambda functions"],
+    # Bare "lambda" can also mean a Python lambda expression, but in resumes and
+    # postings it almost always means AWS Lambda ("AWS (Lambda, API Gateway)").
+    "lambda": ["aws lambda", "lambda functions", "lambda"],
+    "appsync": ["appsync", "aws appsync"],
     "s3": ["s3", "amazon s3"],
     "ec2": ["ec2", "amazon ec2"],
     "api gateway": ["api gateway", "amazon api gateway"],
