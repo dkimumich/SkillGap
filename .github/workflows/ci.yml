@@ -1,8 +1,15 @@
-name: CI
+name: CI/CD
 
 on:
   push:
   pull_request:
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: skillgap
+  LAMBDA_FUNCTION: skillgap
+  AWS_ROLE_ARN: arn:aws:iam::091711113817:role/skillgap-github-deploy
+  API_URL: https://fsx5xni654.execute-api.us-east-2.amazonaws.com
 
 jobs:
   test:
@@ -26,3 +33,41 @@ jobs:
 
       - name: Test
         run: pytest --cov=skillgap --cov-report=term-missing
+
+  deploy:
+    # Only after tests pass, and only for pushes to main (not PRs or other branches).
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # lets GitHub issue the OIDC token AWS trusts
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to AWS with OIDC (no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+        run: |
+          docker build --platform linux/amd64 --provenance=false -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Update Lambda
+        run: |
+          aws lambda update-function-code --function-name "$LAMBDA_FUNCTION" --image-uri "$IMAGE" > /dev/null
+          aws lambda wait function-updated --function-name "$LAMBDA_FUNCTION"
+
+      - name: Smoke test the live API
+        run: |
+          curl --fail --silent --show-error --retry 3 --retry-delay 5 "$API_URL/health"
