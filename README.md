@@ -1,4 +1,5 @@
 # SkillGap
+![CI](https://github.com/dkimumich/SkillGap/actions/workflows/ci.yml/badge.svg)
 
 Scores how well a resume matches a job posting (0–100) and lists the skills the posting asks for that the resume is missing.
 
@@ -24,3 +25,13 @@ pytest --cov=skillgap
 ```
 
 CI (GitHub Actions) runs lint and tests on Python 3.11 and 3.12 on every push.
+
+## Roadmap
+- [x] Synonym-aware skill extraction and match scoring
+- [x] pytest suite and GitHub Actions CI
+- [ ] FastAPI endpoint (`POST /match`)
+- [ ] Deploy to AWS (Docker → ECR → Lambda + API Gateway)
+- [ ] Continuous deployment on merge to `main` (GitHub OIDC)
+- [ ] Embedding-based matching, evaluated against TF-IDF on real applications
+- [ ] Chrome extension to log applications to Google Sheets
+- [ ] Suggested resume bullet rewrites
