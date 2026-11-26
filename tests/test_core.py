@@ -54,6 +54,41 @@ def test_skills_found_next_to_punctuation(text, skill):
     assert skill in extract_skills(text)
 
 
+# Skills found in a real resume and a real posting during manual testing.
+@pytest.mark.parametrize(
+    "text, skill",
+    [
+        ("Applied statistical methods to validate outputs", "statistics"),
+        ("statistical arbitrage research", "statistics"),
+        ("facial recognition pipeline", "computer vision"),
+        ("image-processing optimizations", "computer vision"),
+        ("embedding-based evaluation", "embeddings"),
+        ("demand-forecasting model", "forecasting"),
+        ("Introduction to Data Science", "data science"),
+        ("Hugging Face, OpenAI API", "hugging face"),
+        ("Hugging Face, OpenAI API", "openai api"),
+        ("AWS (Lambda, API Gateway, ECR)", "api gateway"),
+        ("AWS (Lambda, API Gateway, ECR)", "ecr"),
+        ("Java/JDBC backend over an Oracle database", "jdbc"),
+        ("Java/JDBC backend over an Oracle database", "oracle"),
+        ("Designed a relational database schema", "relational databases"),
+        ("Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog", "jira"),
+        ("Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog", "confluence"),
+        ("Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog", "sonarqube"),
+        ("Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog", "artifactory"),
+        ("Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog", "datadog"),
+        ("process improvement, automation, and configuration as code", "infrastructure as code"),
+    ],
+)
+def test_skills_from_real_applications(text, skill):
+    assert skill in extract_skills(text)
+
+
+def test_research_experimentation_is_not_ab_testing():
+    # Bug found on a real resume: "experimentation" used to count as A/B testing.
+    assert "a/b testing" not in extract_skills("reducing bias through systematic experimentation")
+
+
 def test_c_slash_cpp_counts_as_both():
     assert {"c", "c++"} <= extract_skills("C/C++")
 
