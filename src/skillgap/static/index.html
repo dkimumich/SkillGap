@@ -50,6 +50,8 @@
   .chip.gap { background: var(--gap-bg); color: var(--gap); }
   .chip.warn { background: var(--warn-bg); color: var(--warn); }
   .none { color: var(--muted); font-size: 14px; }
+  .caution { margin: 0; color: var(--warn); font-size: 14px; }
+  .caution:empty { display: none; }
   .note { margin-top: 20px; font-size: 13px; color: var(--muted); }
   footer { margin-top: 32px; font-size: 14px; color: var(--muted); }
   footer a { color: var(--accent); }
@@ -87,6 +89,7 @@
       <div class="score"><span id="score">0</span><small> / 100</small></div>
       <div class="meta" id="meta"></div>
     </div>
+    <p id="caution" class="caution"></p>
     <h2>Missing required skills</h2>
     <div class="chips" id="missing"></div>
     <h2>Missing skills the posting only mentions</h2>
@@ -95,7 +98,9 @@
     <div class="chips" id="matched"></div>
     <p class="note">Score = 70% skill coverage (posting skills found in the resume, synonyms included)
       + 30% overall wording similarity (TF-IDF). Skills under a Qualifications or Requirements heading
-      count as required and carry 75% of the coverage. Only skills in SkillGap's vocabulary are detected.</p>
+      count as required and carry 75% of the coverage. When a posting names few skills, coverage is
+      pulled toward 50% so one matched skill can't max out the score. Only skills in SkillGap's
+      vocabulary are detected.</p>
   </section>
 
   <footer>
@@ -157,7 +162,11 @@
       const coverage = body.skill_coverage === null
         ? "No known skills in the posting"
         : Math.round(body.skill_coverage * 100) + "% of the posting's skills found";
-      $("meta").textContent = coverage + " · wording similarity " + body.tfidf_similarity.toFixed(2);
+      $("meta").textContent = coverage + " · wording similarity " + body.tfidf_similarity.toFixed(2)
+        + " · confidence: " + body.confidence;
+      $("caution").textContent = body.confidence === "low"
+        ? "Low confidence: the posting names very few skills SkillGap recognizes, so treat this score as a rough guide."
+        : "";
       const required = new Set(body.missing_required);
       chips($("missing"), body.missing_required, "gap", "None detected");
       chips($("mentioned"), body.missing_skills.filter((s) => !required.has(s)), "warn", "None detected");

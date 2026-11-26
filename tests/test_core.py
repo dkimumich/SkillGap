@@ -139,8 +139,11 @@ def test_synonym_in_resume_satisfies_posting():
     assert result.skill_coverage == 1.0
 
 
-def test_identical_text_scores_100():
-    assert match(GOOD_POSTING, GOOD_POSTING).score == 100
+def test_identical_text_scores_very_high():
+    # Not exactly 100: coverage is shrunk slightly toward 50% (see few-skills tests).
+    result = match(GOOD_POSTING, GOOD_POSTING)
+    assert result.skill_coverage == 1.0
+    assert result.score >= 90
 
 
 def test_posting_with_no_known_skills():
@@ -242,3 +245,39 @@ def test_coverage_weighting():
     # docker (github matched = 1 of 5). Coverage = 0.75 * 1.0 + 0.25 * 0.2 = 0.8
     result = match("Python, agile, GitHub.", SECTIONED_POSTING)
     assert result.skill_coverage == pytest.approx(0.8)
+
+
+# ---- few-skills postings -----------------------------------------------------
+
+FULL_RESUME = "Python developer with SQL, AWS, Docker, React, Java, Git, Linux, pandas, Kubernetes"
+TEN_SKILL_POSTING = "We need Python, SQL, AWS, Docker, React, Java, Git, Linux, pandas, Kubernetes."
+
+
+def test_one_of_one_scores_lower_than_ten_of_ten():
+    one = match(FULL_RESUME, "We need Python.")
+    ten = match(FULL_RESUME, TEN_SKILL_POSTING)
+    assert one.skill_coverage == ten.skill_coverage == 1.0  # raw coverage is unchanged
+    assert one.score < ten.score
+    assert one.score <= 60
+
+
+def test_more_evidence_moves_coverage_further_from_neutral():
+    from skillgap.core import _adjusted_coverage
+
+    assert _adjusted_coverage(1.0, 1) == pytest.approx(2 / 3)
+    assert _adjusted_coverage(1.0, 10) == pytest.approx(11 / 12)
+    assert _adjusted_coverage(0.0, 1) == pytest.approx(1 / 3)
+    assert _adjusted_coverage(0.5, 3) == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize(
+    "posting, level",
+    [
+        ("Friendly team player wanted.", "low"),
+        ("We need Python.", "low"),
+        ("Python, SQL and AWS.", "medium"),
+        (TEN_SKILL_POSTING, "high"),
+    ],
+)
+def test_confidence_levels(posting, level):
+    assert match(FULL_RESUME, posting).confidence == level

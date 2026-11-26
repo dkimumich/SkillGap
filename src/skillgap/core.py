@@ -12,6 +12,11 @@ Postings are split into sections by their headings. Skills under a
 "Qualifications" / "Requirements" heading are *required*; skills found only
 elsewhere (responsibilities, tools the team uses, "nice to have") are
 *mentioned*. Required skills carry most of the coverage weight.
+
+When a posting names only a few known skills, coverage is weak evidence
+(1 of 1 is not as convincing as 10 of 10), so the score pulls coverage toward
+a neutral 50% as if the posting also named two "unknown" skills. The reported
+skill_coverage stays the raw value; only the score is adjusted.
 """
 
 from __future__ import annotations
@@ -28,6 +33,8 @@ COVERAGE_WEIGHT = 0.7
 TFIDF_WEIGHT = 0.3
 REQUIRED_WEIGHT = 0.75   # share of coverage that comes from required skills
 MENTIONED_WEIGHT = 0.25  # share from skills only mentioned elsewhere
+PRIOR_COVERAGE = 0.5     # neutral coverage assumed before seeing any skills
+PRIOR_SKILLS = 2         # how many "unknown" skills that assumption is worth
 
 # Section headings, checked in this order ("Preferred qualifications" is preferred).
 _PREFERRED_HEADING = re.compile(
@@ -50,6 +57,7 @@ class MatchResult:
     matched_skills: list[str]
     missing_skills: list[str]
     missing_required: list[str]     # the subset of missing_skills the posting requires
+    confidence: str                 # "low" / "medium" / "high", from the posting's skill count
 
 
 def _alias_pattern(alias: str) -> str:
@@ -150,6 +158,19 @@ def _coverage(matched: set[str], posting: set[str], required: set[str]) -> float
     return REQUIRED_WEIGHT * required_cov + MENTIONED_WEIGHT * mentioned_cov
 
 
+def _adjusted_coverage(coverage: float, skill_count: int) -> float:
+    """Pull coverage toward PRIOR_COVERAGE when the posting names few skills."""
+    return (coverage * skill_count + PRIOR_COVERAGE * PRIOR_SKILLS) / (skill_count + PRIOR_SKILLS)
+
+
+def _confidence(skill_count: int) -> str:
+    if skill_count <= 2:
+        return "low"
+    if skill_count <= 5:
+        return "medium"
+    return "high"
+
+
 def match(resume_text: str, posting_text: str) -> MatchResult:
     """Score how well a resume matches a job posting.
 
@@ -170,7 +191,8 @@ def match(resume_text: str, posting_text: str) -> MatchResult:
 
     if posting_skills:
         coverage: float | None = _coverage(matched, posting_skills, required)
-        raw = COVERAGE_WEIGHT * coverage + TFIDF_WEIGHT * similarity
+        adjusted = _adjusted_coverage(coverage, len(posting_skills))
+        raw = COVERAGE_WEIGHT * adjusted + TFIDF_WEIGHT * similarity
     else:
         coverage = None
         raw = similarity
@@ -182,4 +204,5 @@ def match(resume_text: str, posting_text: str) -> MatchResult:
         matched_skills=sorted(matched),
         missing_skills=sorted(missing),
         missing_required=sorted(missing & required),
+        confidence=_confidence(len(posting_skills)),
     )

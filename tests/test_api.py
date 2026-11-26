@@ -45,7 +45,7 @@ def test_response_has_expected_fields():
     response = client.post("/match", json={"resume_text": RESUME, "posting_text": POSTING})
     assert set(response.json()) == {
         "score", "skill_coverage", "tfidf_similarity", "matched_skills", "missing_skills",
-        "missing_required",
+        "missing_required", "confidence",
     }
 
 

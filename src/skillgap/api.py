@@ -35,6 +35,7 @@ class MatchResponse(BaseModel):
     matched_skills: list[str]
     missing_skills: list[str]
     missing_required: list[str]
+    confidence: str
 
 
 @app.get("/", include_in_schema=False)
