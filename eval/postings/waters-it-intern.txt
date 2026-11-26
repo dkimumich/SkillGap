@@ -1,0 +1,18 @@
+Responsibilities
+Working with the Software Development Application Enablement team the candidate will:
+Attend and participate daily standups and agile planning meetings including Backlog Refinement, Retrospectives and Sprint Planning.
+Design and build solutions using programming languages like Python, design, plan, and execute project tasks for a variety of automation and integration projects related to applications supported by the team including Jira, Confluence, GitHub, Sonar, Artifactory, and Datadog.
+Identify opportunities for process improvement, automation, and configuration as code.
+Develop and maintain technical documentation, knowledge base articles, runbooks, and user guidance to improve self-service capabilities and reduce operational dependency on the support team.
+Qualifications
+At Waters, we view the internship program as a mutually beneficial opportunity designed to equip student's real world experience, while learning from industry leaders in their functional area of choice. Our goal is that an internship at Waters will enable you to build your network as an early career professional, fast tracking your future career prospects and setting you up for success in the job market. A few key attributes we are seeking in intern candidates include:
+Curiosity: Individuals across the organization are passionate about working with and developing students who have a passion for their subject area and a knack for problem solving.
+Courage: We admire individuals who challenge the status quo, take on leadership roles, and embrace challenges outside their comfort zones.
+Compassion: We expect our team members to embody empathy in their work, fostering ethical professionalism, collaboration, active listening, and a commitment to continuous learning and growth.
+Qualifications Specific To This Role
+Computer Science or equivalent area of study.
+A curiosity and desire for solving unique problems via code.
+Excellent Communication skills and customer focused attitude.
+Experience with common languages like Python or equivalent.
+Some knowledge of agile and scrum practices.
+Sophomore+, projects and responsibilities will be tailored to your specific level.
