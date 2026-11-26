@@ -7,10 +7,10 @@ Then open:    http://127.0.0.1:8000/docs
 from dataclasses import asdict
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 from skillgap.core import match
-from fastapi.responses import RedirectResponse
 
 MAX_CHARS = 50_000  # generous for a resume or posting; blocks huge payloads
 
