@@ -1,4 +1,5 @@
 # SkillGap
+![CI](https://github.com/dkimumich/SkillGap/actions/workflows/ci.yml/badge.svg)
 
 Scores how well a resume matches a job posting (0–100) and lists the skills the posting asks for that the resume is missing.
 
