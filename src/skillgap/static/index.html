@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkillGap: resume–job match</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --ink: #1f1f1d; --muted: #6b6a65; --line: #e3e2dc;
+    --accent: #2f5bd3; --good-bg: #e7f4ea; --good: #1e6b35; --gap-bg: #fdecea; --gap: #a3271c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --card: #1f1f1d; --ink: #ecebe6; --muted: #a3a29b; --line: #34332f;
+      --accent: #7c9cf0; --good-bg: #173a22; --good: #a6e0b5; --gap-bg: #44201c; --gap: #f2b3ab;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 48px; }
+  header h1 { margin: 0 0 4px; font-size: 28px; }
+  header p { margin: 0 0 24px; color: var(--muted); }
+  .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .inputs { grid-template-columns: 1fr; } }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  textarea { width: 100%; height: 300px; padding: 12px; resize: vertical; border-radius: 8px;
+             border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit;
+             font-size: 14px; }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .count { font-size: 13px; color: var(--muted); text-align: right; margin-top: 4px; }
+  .actions { display: flex; align-items: center; gap: 16px; margin: 20px 0; }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 12px 22px;
+           font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: progress; }
+  #status { color: var(--muted); font-size: 14px; }
+  #error { color: var(--gap); font-size: 14px; }
+  #result { display: none; background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+            padding: 24px; }
+  .score-row { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; }
+  .score { font-size: 56px; font-weight: 700; line-height: 1; }
+  .score small { font-size: 20px; color: var(--muted); font-weight: 400; }
+  .meta { color: var(--muted); font-size: 14px; }
+  h2 { font-size: 16px; margin: 20px 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 4px 10px; border-radius: 999px; font-size: 14px; }
+  .chip.good { background: var(--good-bg); color: var(--good); }
+  .chip.gap { background: var(--gap-bg); color: var(--gap); }
+  .none { color: var(--muted); font-size: 14px; }
+  .note { margin-top: 20px; font-size: 13px; color: var(--muted); }
+  footer { margin-top: 32px; font-size: 14px; color: var(--muted); }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>SkillGap</h1>
+    <p>Paste a resume and a job posting to see how well they match and which skills are missing.</p>
+  </header>
+
+  <form id="form">
+    <div class="inputs">
+      <div>
+        <label for="resume">Resume</label>
+        <textarea id="resume" maxlength="50000" placeholder="Paste your resume as plain text" required></textarea>
+        <div class="count" id="resume-count">0 / 50,000</div>
+      </div>
+      <div>
+        <label for="posting">Job posting</label>
+        <textarea id="posting" maxlength="50000" placeholder="Paste the job description" required></textarea>
+        <div class="count" id="posting-count">0 / 50,000</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit" id="go">Check match</button>
+      <span id="status" aria-live="polite"></span>
+      <span id="error" role="alert"></span>
+    </div>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <div class="score-row">
+      <div class="score"><span id="score">0</span><small> / 100</small></div>
+      <div class="meta" id="meta"></div>
+    </div>
+    <h2>Missing skills</h2>
+    <div class="chips" id="missing"></div>
+    <h2>Matched skills</h2>
+    <div class="chips" id="matched"></div>
+    <p class="note">Score = 70% skill coverage (posting skills found in the resume, synonyms included)
+      + 30% overall wording similarity (TF-IDF). Only skills in SkillGap's vocabulary are detected.</p>
+  </section>
+
+  <footer>
+    <a href="https://github.com/dkimumich/SkillGap">Source on GitHub</a> ·
+    <a href="/docs">API docs</a>
+  </footer>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const fmt = new Intl.NumberFormat();
+
+  for (const id of ["resume", "posting"]) {
+    $(id).addEventListener("input", () => {
+      $(id + "-count").textContent = fmt.format($(id).value.length) + " / 50,000";
+      $("error").textContent = "";
+    });
+  }
+
+  function chips(el, skills, kind, emptyText) {
+    el.replaceChildren();
+    if (!skills.length) {
+      const span = document.createElement("span");
+      span.className = "none";
+      span.textContent = emptyText;
+      el.append(span);
+      return;
+    }
+    for (const skill of skills) {
+      const span = document.createElement("span");
+      span.className = "chip " + kind;
+      span.textContent = skill;
+      el.append(span);
+    }
+  }
+
+  $("form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const resume = $("resume").value, posting = $("posting").value;
+    if (!resume.trim() || !posting.trim()) {
+      $("error").textContent = "Paste both a resume and a job posting first.";
+      return;
+    }
+    $("go").disabled = true;
+    $("error").textContent = "";
+    $("status").textContent = "Scoring… (the first request can take a few seconds)";
+    try {
+      const response = await fetch("/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume_text: resume, posting_text: posting }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = Array.isArray(body.detail) ? body.detail.map((d) => d.msg).join("; ") : body.detail;
+        throw new Error(detail || "Request failed (" + response.status + ")");
+      }
+      $("score").textContent = body.score;
+      const coverage = body.skill_coverage === null
+        ? "No known skills in the posting"
+        : Math.round(body.skill_coverage * 100) + "% of the posting's skills found";
+      $("meta").textContent = coverage + " · wording similarity " + body.tfidf_similarity.toFixed(2);
+      chips($("missing"), body.missing_skills, "gap", "None detected");
+      chips($("matched"), body.matched_skills, "good", "None detected");
+      $("result").style.display = "block";
+      $("status").textContent = "";
+    } catch (err) {
+      $("status").textContent = "";
+      $("error").textContent = err.message;
+    } finally {
+      $("go").disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

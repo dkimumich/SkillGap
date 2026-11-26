@@ -1,18 +1,20 @@
 """HTTP API for SkillGap.
 
 Run locally:  uvicorn skillgap.api:app --reload
-Then open:    http://127.0.0.1:8000/docs
+Then open:    http://127.0.0.1:8000 (web page) or /docs (API docs)
 """
 
 from dataclasses import asdict
+from importlib.resources import files
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from skillgap.core import match
 
 MAX_CHARS = 50_000  # generous for a resume or posting; blocks huge payloads
+INDEX_HTML = files("skillgap").joinpath("static/index.html").read_text(encoding="utf-8")
 
 app = FastAPI(
     title="SkillGap",
@@ -35,8 +37,10 @@ class MatchResponse(BaseModel):
 
 
 @app.get("/", include_in_schema=False)
-def root() -> RedirectResponse:
-    return RedirectResponse(url="/docs")
+def root() -> HTMLResponse:
+    """The web page: paste a resume and a posting, see the result."""
+    return HTMLResponse(INDEX_HTML)
+
 
 @app.get("/health")
 def health() -> dict[str, str]:

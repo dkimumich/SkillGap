@@ -14,10 +14,22 @@ def test_health():
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
-def test_root_redirects_to_docs():
-    response = client.get("/", follow_redirects=False)
-    assert response.status_code == 307
-    assert response.headers["location"] == "/docs"
+
+def test_root_serves_web_page():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Check match" in response.text
+    assert 'fetch("/match"' in response.text
+
+
+def test_multiline_resume_is_accepted():
+    # Real resumes have line breaks; sent as proper JSON they must work.
+    resume = "Experience\n• Built Python pipelines\n\nSkills: SQL, Docker"
+    response = client.post("/match", json={"resume_text": resume, "posting_text": "Python, AWS"})
+    assert response.status_code == 200
+    assert response.json()["missing_skills"] == ["aws"]
+
 
 def test_match_returns_score_and_skills():
     response = client.post("/match", json={"resume_text": RESUME, "posting_text": POSTING})
