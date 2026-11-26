@@ -4,7 +4,7 @@
 
 Scores how well a resume matches a job posting (0–100) and lists the skills the posting asks for that the resume is missing.
 
-**Try it live:** https://fsx5xni654.execute-api.us-east-2.amazonaws.com/docs
+**Try it live:** https://fsx5xni654.execute-api.us-east-2.amazonaws.com
 Open **POST /match** → **Try it out** → paste a resume and a job posting → **Execute**. (The first request after a quiet period takes a few seconds while AWS Lambda starts up.)
 
 ## Why
