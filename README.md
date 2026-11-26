@@ -9,7 +9,7 @@ Open **POST /match** → **Try it out** → paste a resume and a job posting →
 
 ## Why
 
-During my internship application season, keyword-matching tools often gave me inaccurate scores. I built SkillGap to understand how resume–job matching works, measure how accurate it is, and close the gaps on my own resume: cloud, CI/CD and automated testing.
+During my internship application season, keyword-matching tools often gave me inaccurate scores. I built SkillGap to understand how resume–job matching works, measure how accurate it is.
 
 ## Architecture
 
